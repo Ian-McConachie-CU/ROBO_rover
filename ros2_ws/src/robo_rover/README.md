@@ -66,6 +66,17 @@ robo_rover/
 
 ## Usage
 
+### Building and Testing
+
+```bash
+cd ~/ros2_ws
+colcon build 
+source install/setup.bash
+
+# Test the node directly
+ros2 run robo_rover rover_node
+```
+
 ### Basic Launch
 
 Launch with default parameters:
@@ -152,6 +163,19 @@ if __name__ == '__main__':
 ```
 
 ## Monitoring IMU Data
+### IMU Data Format
+
+The IMU data is published as separate Vector3 messages:
+
+**Gyroscope (`/imu/gyro`):**
+- `x`: Roll rate (rad/s)
+- `y`: Pitch rate (rad/s) 
+- `z`: Yaw rate (rad/s)
+
+**Accelerometer (`/imu/accel`):**
+- `x`: X-axis acceleration (m/s²)
+- `y`: Y-axis acceleration (m/s²)
+- `z`: Z-axis acceleration (m/s²)
 
 ### View Gyroscope Data
 
@@ -286,33 +310,3 @@ ros2 topic hz /imu/accel
    ros2 topic info /imu/accel
    ```
 
-
-## Development
-
-### Building and Testing
-
-```bash
-cd ~/Documents/ROBO_rover/ros2_ws
-colcon build --packages-select robo_rover
-source install/setup.bash
-
-# Test the node directly
-ros2 run robo_rover rover_node
-
-# Test the launch file
-ros2 launch robo_rover rover_launch.py
-```
-
-### IMU Data Format
-
-The IMU data is published as separate Vector3 messages:
-
-**Gyroscope (`/imu/gyro`):**
-- `x`: Roll rate (rad/s)
-- `y`: Pitch rate (rad/s) 
-- `z`: Yaw rate (rad/s)
-
-**Accelerometer (`/imu/accel`):**
-- `x`: X-axis acceleration (m/s²)
-- `y`: Y-axis acceleration (m/s²)
-- `z`: Z-axis acceleration (m/s²)
