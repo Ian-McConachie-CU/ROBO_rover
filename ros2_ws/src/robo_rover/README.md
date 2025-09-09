@@ -80,9 +80,7 @@ ros2 launch ardupilot_rover rover.launch.py \
     connection_string:=/dev/ttyACM0 \
     baud_rate:=57600 \
     control_frequency:=25.0 \
-    imu_frequency:=25.0 \
-    default_throttle:=0.0 \
-    default_steering:=0.0
+    imu_frequency:=25.0 
 ```
 
 ### Available Launch Parameters
@@ -91,8 +89,6 @@ ros2 launch ardupilot_rover rover.launch.py \
 - `baud_rate`: Serial baud rate (default: `115200`)
 - `control_frequency`: Control command rate in Hz (default: `20.0`)
 - `imu_frequency`: IMU publishing rate in Hz (default: `20.0`)
-- `default_throttle`: Default throttle when no commands (-1.0 to 1.0, default: `0.0`)
-- `default_steering`: Default steering when no commands (-1.0 to 1.0, default: `0.0`)
 - `namespace`: Namespace for the rover node (default: empty)
 
 ## Controlling the Rover
