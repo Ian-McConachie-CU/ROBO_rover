@@ -45,8 +45,9 @@ def generate_launch_description():
     
     # Rover node
     rover_node = Node(
-        package='robo_rover',
-        executable='rover_node',
+        # package='robo_rover',
+        executable='python3',
+        arguments=['-m', 'robo_rover.rover_node'],
         name='rover_node',
         namespace=LaunchConfiguration('namespace'),
         output='screen',
