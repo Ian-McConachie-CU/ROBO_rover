@@ -15,7 +15,7 @@ import threading
 from pymavlink import mavutil
 import numpy as np
 from scipy.spatial.transform import Rotation
-
+from geometry_msgs.msg import Vector3
 
 class ArduPilotRoverNode(Node):
     def __init__(self):
@@ -60,7 +60,8 @@ class ArduPilotRoverNode(Node):
         )
         
         # Publishers
-        self.imu_pub = self.create_publisher(Imu, 'imu/data', sensor_qos)
+        self.gyro_pub = self.create_publisher(Vector3, 'imu/gyro', sensor_qos)
+        self.accel_pub = self.create_publisher(Vector3, 'imu/accel', sensor_qos)
         self.armed_pub = self.create_publisher(Bool, 'rover/armed', control_qos)
         
         # Subscribers
@@ -218,17 +219,6 @@ class ArduPilotRoverNode(Node):
                 0, 0, 0, 0, 0
             )
             
-            # Request HIGHRES_IMU messages as backup
-            self.master.mav.command_long_send(
-                self.master.target_system,
-                self.master.target_component,
-                mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
-                0,
-                105,  # HIGHRES_IMU message ID
-                interval_us,
-                0, 0, 0, 0, 0
-            )
-            
             self.get_logger().info(f'Requested IMU data at {self.imu_freq} Hz')
             
         except Exception as e:
@@ -240,8 +230,18 @@ class ArduPilotRoverNode(Node):
         # msg.linear.x: forward/backward speed (-1.0 to 1.0)
         # msg.angular.z: turning rate (-2.0 to 2.0)
         
+        # adds offset to throttle to make it act more linear
+        throttle_raw = msg.linear.x * -400
+        offset = 80
+
+        if throttle_raw >= 0:
+            throttle_with_offset = throttle_raw + offset
+        else:
+            throttle_with_offset = throttle_raw - offset
+
         # Scale to MAVLink range (-1000 to 1000)
-        self.current_throttle = int(np.clip(msg.linear.x * -500, -500, 500))
+        self.current_throttle = int(np.clip(throttle_with_offset, -300, 300))
+
         self.current_steering = int(np.clip(msg.angular.z * 500, -1000, 1000))
         
         self.last_cmd_time = time.time()
@@ -269,11 +269,11 @@ class ArduPilotRoverNode(Node):
         try:
             self.master.mav.manual_control_send(
                 self.master.target_system,
-                steering,    # x (steering)
-                throttle,    # y (throttle)
-                0,           # z (not used)
-                0,           # r (not used)
-                0            # buttons
+                0,      
+                steering,    
+                throttle,      
+                0,           
+                0            
             )
         except Exception as e:
             self.get_logger().error(f'Failed to send control command: {e}')
@@ -288,73 +288,22 @@ class ArduPilotRoverNode(Node):
         if scaled_imu is not None:
             self.publish_scaled_imu(scaled_imu)
             return
-        
-        # Fallback to HIGHRES_IMU
-        highres_imu = self.master.recv_match(type='HIGHRES_IMU', blocking=False)
-        if highres_imu is not None:
-            self.publish_highres_imu(highres_imu)
     
     def publish_scaled_imu(self, scaled_imu_msg):
-        """Publish SCALED_IMU data as ROS2 IMU message"""
-        imu_msg = Imu()
+        # Gyro message
+        gyro_msg = Vector3()
+        gyro_msg.x = scaled_imu_msg.xgyro / 1000.0
+        gyro_msg.y = scaled_imu_msg.ygyro / 1000.0
+        gyro_msg.z = scaled_imu_msg.zgyro / 1000.0
+        self.gyro_pub.publish(gyro_msg)
         
-        # Header
-        imu_msg.header.stamp = self.get_clock().now().to_msg()
-        imu_msg.header.frame_id = 'imu_link'
+        # Accel message
+        accel_msg = Vector3()
+        accel_msg.x = (scaled_imu_msg.xacc / 1000.0) * 9.80665
+        accel_msg.y = (scaled_imu_msg.yacc / 1000.0) * 9.80665
+        accel_msg.z = (scaled_imu_msg.zacc / 1000.0) * 9.80665
+        self.accel_pub.publish(accel_msg)
         
-        # Convert gyro from mrad/s to rad/s
-        imu_msg.angular_velocity.x = scaled_imu_msg.xgyro / 1000.0
-        imu_msg.angular_velocity.y = scaled_imu_msg.ygyro / 1000.0
-        imu_msg.angular_velocity.z = scaled_imu_msg.zgyro / 1000.0
-        
-        # Convert accelerometer from mG to m/s²
-        imu_msg.linear_acceleration.x = (scaled_imu_msg.xacc / 1000.0) * 9.80665
-        imu_msg.linear_acceleration.y = (scaled_imu_msg.yacc / 1000.0) * 9.80665
-        imu_msg.linear_acceleration.z = (scaled_imu_msg.zacc / 1000.0) * 9.80665
-        
-        # ArduPilot doesn't provide quaternion in SCALED_IMU, set to unknown
-        imu_msg.orientation.x = 0.0
-        imu_msg.orientation.y = 0.0
-        imu_msg.orientation.z = 0.0
-        imu_msg.orientation.w = 1.0
-        
-        # Set covariance matrices (unknown/identity)
-        imu_msg.orientation_covariance = [-1.0] + [0.0] * 8  # -1 means unknown
-        imu_msg.angular_velocity_covariance = [0.01] + [0.0] * 8  # Small variance
-        imu_msg.linear_acceleration_covariance = [0.01] + [0.0] * 8  # Small variance
-        
-        self.imu_pub.publish(imu_msg)
-    
-    def publish_highres_imu(self, highres_imu_msg):
-        """Publish HIGHRES_IMU data as ROS2 IMU message"""
-        imu_msg = Imu()
-        
-        # Header
-        imu_msg.header.stamp = self.get_clock().now().to_msg()
-        imu_msg.header.frame_id = 'imu_link'
-        
-        # Gyro data already in rad/s
-        imu_msg.angular_velocity.x = highres_imu_msg.xgyro
-        imu_msg.angular_velocity.y = highres_imu_msg.ygyro
-        imu_msg.angular_velocity.z = highres_imu_msg.zgyro
-        
-        # Accelerometer data already in m/s²
-        imu_msg.linear_acceleration.x = highres_imu_msg.xacc
-        imu_msg.linear_acceleration.y = highres_imu_msg.yacc
-        imu_msg.linear_acceleration.z = highres_imu_msg.zacc
-        
-        # ArduPilot doesn't provide quaternion in HIGHRES_IMU, set to unknown
-        imu_msg.orientation.x = 0.0
-        imu_msg.orientation.y = 0.0
-        imu_msg.orientation.z = 0.0
-        imu_msg.orientation.w = 1.0
-        
-        # Set covariance matrices
-        imu_msg.orientation_covariance = [-1.0] + [0.0] * 8  # -1 means unknown
-        imu_msg.angular_velocity_covariance = [0.01] + [0.0] * 8
-        imu_msg.linear_acceleration_covariance = [0.01] + [0.0] * 8
-        
-        self.imu_pub.publish(imu_msg)
     
     def status_loop(self):
         """Publish status information"""
