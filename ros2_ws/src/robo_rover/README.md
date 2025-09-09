@@ -70,7 +70,7 @@ robo_rover/
 
 Launch with default parameters:
 ```bash
-ros2 launch ardupilot_rover rover.launch.py
+ros2 launch robo_rover rover_launch.py
 ```
 
 ### Launch with Custom Parameters
