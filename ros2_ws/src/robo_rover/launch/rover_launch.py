@@ -23,18 +23,7 @@ def generate_launch_description():
         default_value='115200',
         description='Baud rate for serial connection'
     )
-    
-    default_throttle_arg = DeclareLaunchArgument(
-        'default_throttle',
-        default_value='0.0',
-        description='Default throttle value when no commands received (-1.0 to 1.0)'
-    )
-    
-    default_steering_arg = DeclareLaunchArgument(
-        'default_steering',
-        default_value='0.0',
-        description='Default steering value when no commands received (-1.0 to 1.0)'
-    )
+
     
     control_frequency_arg = DeclareLaunchArgument(
         'control_frequency',
@@ -65,8 +54,6 @@ def generate_launch_description():
         parameters=[{
             'connection_string': LaunchConfiguration('connection_string'),
             'baud_rate': LaunchConfiguration('baud_rate'),
-            'default_throttle': LaunchConfiguration('default_throttle'),
-            'default_steering': LaunchConfiguration('default_steering'),
             'control_frequency': LaunchConfiguration('control_frequency'),
             'imu_frequency': LaunchConfiguration('imu_frequency'),
         }],
@@ -85,8 +72,6 @@ def generate_launch_description():
             '  Baud Rate: ', LaunchConfiguration('baud_rate'), '\n',
             '  Control Frequency: ', LaunchConfiguration('control_frequency'), ' Hz\n',
             '  IMU Frequency: ', LaunchConfiguration('imu_frequency'), ' Hz\n',
-            '  Default Throttle: ', LaunchConfiguration('default_throttle'), '\n',
-            '  Default Steering: ', LaunchConfiguration('default_steering'), '\n',
         ]
     )
     
@@ -94,8 +79,6 @@ def generate_launch_description():
         # Arguments
         connection_string_arg,
         baud_rate_arg,
-        default_throttle_arg,
-        default_steering_arg,
         control_frequency_arg,
         imu_frequency_arg,
         namespace_arg,

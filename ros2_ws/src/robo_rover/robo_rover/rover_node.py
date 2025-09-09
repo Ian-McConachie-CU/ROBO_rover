@@ -24,20 +24,18 @@ class ArduPilotRoverNode(Node):
         # Parameters
         self.declare_parameter('connection_string', '/dev/ttyACM1')
         self.declare_parameter('baud_rate', 115200)
-        self.declare_parameter('default_throttle', 0.0)
-        self.declare_parameter('default_steering', 0.0)
         self.declare_parameter('control_frequency', 20.0)
         self.declare_parameter('imu_frequency', 20.0)
         
         # Get parameters
         self.connection_string = self.get_parameter('connection_string').value
         self.baud_rate = self.get_parameter('baud_rate').value
-        self.default_throttle = self.get_parameter('default_throttle').value
-        self.default_steering = self.get_parameter('default_steering').value
         self.control_freq = self.get_parameter('control_frequency').value
         self.imu_freq = self.get_parameter('imu_frequency').value
         
         # Control variables
+        self.default_throttle = 0.0
+        self.default_steering = 0.0
         self.current_throttle = self.default_throttle
         self.current_steering = self.default_steering
         self.last_cmd_time = time.time()
@@ -240,11 +238,11 @@ class ArduPilotRoverNode(Node):
         """Handle incoming velocity commands"""
         # Convert Twist message to throttle and steering
         # msg.linear.x: forward/backward speed (-1.0 to 1.0)
-        # msg.angular.z: turning rate (-1.0 to 1.0)
+        # msg.angular.z: turning rate (-2.0 to 2.0)
         
         # Scale to MAVLink range (-1000 to 1000)
-        self.current_throttle = int(np.clip(msg.linear.x * 1000, -1000, 1000))
-        self.current_steering = int(np.clip(msg.angular.z * 1000, -1000, 1000))
+        self.current_throttle = int(np.clip(msg.linear.x * -500, -500, 500))
+        self.current_steering = int(np.clip(msg.angular.z * 500, -1000, 1000))
         
         self.last_cmd_time = time.time()
         

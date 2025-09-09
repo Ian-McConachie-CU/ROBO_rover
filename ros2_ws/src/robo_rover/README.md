@@ -12,7 +12,7 @@ This ROS2 package provides integrated control and IMU data publishing for a Pixh
 ### Subscribed Topics
 - `/cmd_vel` (`geometry_msgs/Twist`): Velocity commands
   - `linear.x`: Forward/backward speed (-1.0 to 1.0)
-  - `angular.z`: Turning rate (-1.0 to 1.0)
+  - `angular.z`: Turning rate (-2.0 to 2.0) [rad/s]
 
 ## Package Structure
 
@@ -89,7 +89,6 @@ ros2 launch ardupilot_rover rover.launch.py \
 - `baud_rate`: Serial baud rate (default: `115200`)
 - `control_frequency`: Control command rate in Hz (default: `20.0`)
 - `imu_frequency`: IMU publishing rate in Hz (default: `20.0`)
-- `namespace`: Namespace for the rover node (default: empty)
 
 ## Controlling the Rover
 
