@@ -2,18 +2,11 @@
 
 This ROS2 package provides integrated control and IMU data publishing for a Pixhawk 4 Mini running ArduPilot Rover firmware.
 
-## Features
-
-- **Unified Node**: Combines steering/throttle control and IMU data publishing in a single node
-- **Fixed Rate Control**: Sends commands at 20Hz and publishes IMU data at 20Hz
-- **Automatic Connection**: Establishes MAVLink connection and arms the rover
-- **Safety Features**: Falls back to default values when no commands received
-- **ROS2 Integration**: Full ROS2 node with proper QoS profiles and message types
-
 ## Topics
 
 ### Published Topics
-- `/imu/data` (`sensor_msgs/Imu`): IMU data (gyroscope and accelerometer)
+- `/imu/gyro` (`geometry_msgs/Vector3`): Gyroscope data (x, y, z in rad/s)
+- `/imu/accel` (`geometry_msgs/Vector3`): Accelerometer data (x, y, z in m/s²)
 - `/rover/armed` (`std_msgs/Bool`): Rover armed status
 
 ### Subscribed Topics
@@ -24,15 +17,15 @@ This ROS2 package provides integrated control and IMU data publishing for a Pixh
 ## Package Structure
 
 ```
-ardupilot_rover/
-├── ardupilot_rover/
+robo_rover/
+├── robo_rover/
 │   ├── __init__.py
 │   └── rover_node.py          # Main rover node
 ├── launch/
-│   └── rover.launch.py        # Launch file
-├── scripts/
-│   └── rover_node.py          # Executable script
-├── CMakeLists.txt
+│   └── rover_launch.py        # Launch file
+├── resource/
+│   └── robo_rover             # Package marker file
+├── test/                      # Test files
 ├── package.xml
 ├── setup.py
 ├── requirements.txt
@@ -41,26 +34,27 @@ ardupilot_rover/
 
 ## Installation
 
-1. **Install Python dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Create ROS2 workspace (if not already done):**
+1. **Create ROS2 workspace (if not already done):**
    ```bash
    mkdir -p ~/ros2_ws/src
    cd ~/ros2_ws/src
    ```
 
-3. **Copy this package to your workspace:**
+2. **Clone this package to your workspace:**
    ```bash
-   # Copy the ardupilot_rover folder to ~/ros2_ws/src/
+   cd ~/ros2_ws/src
+   git clone <repository-url>
+
+3. **Install Python dependencies:**
+   ```bash
+   cd ~/ros2_ws/src/robo_rover
+   pip install -r requirements.txt
    ```
 
 4. **Build the package:**
    ```bash
    cd ~/ros2_ws
-   colcon build --packages-select ardupilot_rover
+   colcon build
    source install/setup.bash
    ```
 
@@ -162,19 +156,32 @@ if __name__ == '__main__':
     main()
 ```
 
-## Monitoring Data
+## Monitoring IMU Data
 
-### View IMU Data
+### View Gyroscope Data
 
 ```bash
-# Show IMU messages
-ros2 topic echo /imu/data
+# Show gyroscope messages (rad/s)
+ros2 topic echo /imu/gyro
 
-# Show IMU data rate
-ros2 topic hz /imu/data
+# Show gyro data rate
+ros2 topic hz /imu/gyro
 
-# Plot IMU data (requires rqt)
-rqt_plot /imu/data/angular_velocity/x /imu/data/angular_velocity/y /imu/data/angular_velocity/z
+# Plot gyro data (requires rqt)
+rqt_plot /imu/gyro/x /imu/gyro/y /imu/gyro/z
+```
+
+### View Accelerometer Data
+
+```bash
+# Show accelerometer messages (m/s²)
+ros2 topic echo /imu/accel
+
+# Show accel data rate
+ros2 topic hz /imu/accel
+
+# Plot accel data (requires rqt)
+rqt_plot /imu/accel/x /imu/accel/y /imu/accel/z
 ```
 
 ### View Rover Status
@@ -188,7 +195,25 @@ ros2 topic list
 
 # Get topic info
 ros2 topic info /cmd_vel
-ros2 topic info /imu/data
+ros2 topic info /imu/gyro
+ros2 topic info /imu/accel
+```
+
+### Monitor Both Sensors Simultaneously
+
+```bash
+# Terminal 1: Launch rover
+ros2 launch robo_rover rover_launch.py
+
+# Terminal 2: Monitor gyro data
+ros2 topic echo /imu/gyro
+
+# Terminal 3: Monitor accelerometer data
+ros2 topic echo /imu/accel
+
+# Terminal 4: Check data rates
+ros2 topic hz /imu/gyro
+ros2 topic hz /imu/accel
 ```
 
 ## Safety Features
@@ -199,7 +224,6 @@ ros2 topic info /imu/data
 
 3. **Clean Shutdown**: When the node is terminated, it stops the rover and disarms it.
 
-4. **Connection Monitoring**: The node monitors the MAVLink connection and reports status.
 
 ## Troubleshooting
 
@@ -247,7 +271,7 @@ ros2 topic info /imu/data
 
 1. **Verify message types:**
    ```bash
-   ros2 interface show sensor_msgs/Imu
+   ros2 interface show geometry_msgs/Vector3
    ```
 
 2. **Check if IMU messages are being received:**
@@ -257,47 +281,43 @@ ros2 topic info /imu/data
    # Then type: output list
    ```
 
+3. **No IMU data appearing:**
+   ```bash
+   # Check if topics exist
+   ros2 topic list | grep imu
+   
+   # Check topic info
+   ros2 topic info /imu/gyro
+   ros2 topic info /imu/accel
+   ```
+
+
 ## Development
-
-### File Organization
-
-Place files in the following structure:
-
-```
-~/ros2_ws/src/ardupilot_rover/
-├── ardupilot_rover/
-│   ├── __init__.py
-│   └── rover_node.py
-├── launch/
-│   └── rover.launch.py
-├── scripts/
-│   └── rover_node.py  # Copy of rover_node.py, made executable
-├── resource/
-│   └── ardupilot_rover  # Empty marker file
-├── CMakeLists.txt
-├── package.xml
-├── setup.py
-├── requirements.txt
-└── README.md
-```
-
-### Making the Script Executable
-
-```bash
-cp ardupilot_rover/rover_node.py scripts/rover_node.py
-chmod +x scripts/rover_node.py
-```
 
 ### Building and Testing
 
 ```bash
-cd ~/ros2_ws
-colcon build --packages-select ardupilot_rover
+cd ~/Documents/ROBO_rover/ros2_ws
+colcon build --packages-select robo_rover
 source install/setup.bash
 
 # Test the node directly
-ros2 run ardupilot_rover rover_node
+ros2 run robo_rover rover_node
 
 # Test the launch file
-ros2 launch ardupilot_rover rover.launch.py
+ros2 launch robo_rover rover_launch.py
 ```
+
+### IMU Data Format
+
+The IMU data is published as separate Vector3 messages:
+
+**Gyroscope (`/imu/gyro`):**
+- `x`: Roll rate (rad/s)
+- `y`: Pitch rate (rad/s) 
+- `z`: Yaw rate (rad/s)
+
+**Accelerometer (`/imu/accel`):**
+- `x`: X-axis acceleration (m/s²)
+- `y`: Y-axis acceleration (m/s²)
+- `z`: Z-axis acceleration (m/s²)
