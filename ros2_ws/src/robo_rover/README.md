@@ -87,7 +87,7 @@ ros2 launch robo_rover rover_launch.py
 ### Launch with Custom Parameters
 
 ```bash
-ros2 launch ardupilot_rover rover.launch.py \
+ros2 launch robo_rover rover_launch.py \
     connection_string:=/dev/ttyACM0 \
     baud_rate:=57600 \
     control_frequency:=25.0 \
