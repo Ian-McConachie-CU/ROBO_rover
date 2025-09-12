@@ -43,7 +43,7 @@ robo_rover/
 2. **Clone this package to your workspace:**
    ```bash
    cd ~/ros2_ws/src
-   git clone <repository-url>
+   git clone https://github.com/Ian-McConachie-CU/ROBO_rover.git
    
 3. **Fix the file structure:**
    ```bash
