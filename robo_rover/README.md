@@ -47,7 +47,8 @@ robo_rover/
    
 3. **Fix the file structure:**
    ```bash
-    mv ROBO_rover/robo_rover/ .
+   cd ~/ros2_ws/src
+   mv ROBO_rover/robo_rover/ .
 
 3. **Install Python dependencies:**
    ```bash
