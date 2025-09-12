@@ -314,4 +314,6 @@ ros2 topic hz /imu/accel
    ros2 topic info /imu/gyro
    ros2 topic info /imu/accel
    ```
-
+## Notes:
+This package provides a low-level controller for steering and velocity. 
+However, it requires some tuning to get good tracking results. Don't expect the car to hit the reference targets solely based on the commands. You are expected to use the IMU data to create an outer control loop for optimal performance. 
