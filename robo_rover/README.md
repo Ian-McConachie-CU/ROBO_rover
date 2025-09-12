@@ -44,6 +44,10 @@ robo_rover/
    ```bash
    cd ~/ros2_ws/src
    git clone <repository-url>
+   
+3. **Fix the file structure:**
+   ```bash
+    mv ROBO_rover/robo_rover/ .
 
 3. **Install Python dependencies:**
    ```bash
